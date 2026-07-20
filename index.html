@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>웹 미션 알람 (Web Mission Alarm)</title>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="styles/theme.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- 1. 디지털 시계 영역 -->
+    <div id="clock-container"></div>
+    
+    <!-- 2. Web Serial 포트 연결 카드 영역 -->
+    <div id="serial-container"></div>
+    
+    <!-- 3. 실시간 센서 상태 대시보드 영역 -->
+    <div id="monitor-container"></div>
+    
+    <!-- 4. 알람 설정 및 미션 스케줄러 영역 -->
+    <div id="scheduler-container"></div>
+  </div>
+
+  <!-- 5. 알람 구동 시 팝업될 사이렌 오버레이 영역 -->
+  <div id="overlay-container"></div>
+
+  <!-- 메인 모듈 컨트롤러 -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>
