@@ -114,6 +114,10 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 // 4. 알람 시작 제어 (Alarm On) (2단계: 활성화)
 async function handleAlarmOn() {
+  // 비동기 딜레이를 거치는 도중 전역 상태가 null로 변하는 것을 방지하기 위해 로컬 변수로 캡처
+  const config = state.alarmConfig;
+  if (!config) return;
+
   state.isAlarmTriggered = true;
   state.alarmFiredToday = true;
 
@@ -136,8 +140,14 @@ async function handleAlarmOn() {
     console.warn('장치가 연결되지 않은 상태에서 알람이 예약 작동되었습니다.');
   }
 
+  // 비동기 전송 처리 도중 사용자가 예약을 취소하거나 연결 해제 상태가 되었는지 확인
+  if (!state.isAlarmTriggered) {
+    console.log('비동기 대기 중 알람 해제가 감지되어 오버레이 기동을 취소합니다.');
+    return;
+  }
+
   // 전체 화면 사이렌 오버레이 팝업 기동
-  overlay.trigger(state.alarmConfig.mission, state.alarmConfig.threshold);
+  overlay.trigger(config.mission, config.threshold);
 }
 
 // 5. 알람 해제 제어 (Alarm Off - 미션 성공 시) (2단계: 활성화)
