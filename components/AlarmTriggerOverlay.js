@@ -191,6 +191,11 @@ export default class AlarmTriggerOverlay {
           
           <!-- 미션 동적 장착 영역 -->
           <div id="dynamic-mission-area" style="width: 100%;"></div>
+
+          <!-- 2단계: 비상 알람 해제 수동 버튼 -->
+          <button class="btn-neon" id="btn-emergency-off" style="margin-top: 20px; border-color: var(--color-danger); box-shadow: 0 0 10px rgba(255, 23, 68, 0.4); background: rgba(255, 23, 68, 0.15);">
+            비상 알람 해제 (수동 정지)
+          </button>
         </div>
       </div>
     `;
@@ -198,10 +203,23 @@ export default class AlarmTriggerOverlay {
     this.overlayEl = this.container.querySelector('#alarm-overlay');
     this.contentArea = this.container.querySelector('#dynamic-mission-area');
     this.instructionEl = this.container.querySelector('#mission-instruction');
+
+    // 2단계: 수동 해제 이벤트 리스너
+    this.emergencyBtn = this.container.querySelector('#btn-emergency-off');
+    this.emergencyBtn.addEventListener('click', () => {
+      console.log('[2단계 수동 해제] 비상 알람 해제 버튼 클릭됨');
+      this.success();
+    });
   }
 
   // 외부(app.js)에서 알람이 예약 도달했을 때 호출하여 오버레이 가동
   trigger(missionType, threshold) {
+    // 3단계: 연속적인 알람 구동 시 이전 상태가 누적되어 오동작하지 않도록 변수 초기화
+    this.activeMission = null;
+    this.switchHoldStartTime = null;
+    this.ultrasonicStartTime = null;
+    this.mathAnswer = null;
+
     this.threshold = threshold;
     this.overlayEl.style.display = 'flex';
     this.contentArea.innerHTML = '';
@@ -371,6 +389,8 @@ export default class AlarmTriggerOverlay {
         this.circleEl.style.stroke = 'var(--color-danger)';
         this.circleEl.style.filter = 'none';
         this.setCircleProgress(0);
+        this.instructionEl.textContent = '아두이노 스위치를 3초 동안 꾹 누르고 있으세요.';
+        this.instructionEl.style.color = '#FFF';
       }
     }
 

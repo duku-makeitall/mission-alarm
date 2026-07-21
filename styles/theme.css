@@ -9,6 +9,8 @@
   
   --font-main: 'Outfit', sans-serif;
   --font-digital: 'Orbitron', monospace;
+  
+  color-scheme: dark;
 }
 
 * {

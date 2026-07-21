@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>웹 미션 알람 - 컴포넌트 디자인 데모</title>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="styles/theme.css">
+  <style>
+    /* 데모 특화 레이아웃 (세로형 모바일 뷰 2개와 시뮬레이터 구성) */
+    body {
+      align-items: flex-start;
+      padding: 40px 20px;
+      gap: 30px;
+      flex-wrap: wrap;
+      background-color: #05070B;
+    }
+    
+    .demo-wrapper {
+      display: flex;
+      gap: 30px;
+      flex-wrap: wrap;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .demo-column {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .simulator-card {
+      border: 1px solid rgba(138, 43, 226, 0.3) !important;
+      box-shadow: 0 0 20px rgba(138, 43, 226, 0.15) !important;
+    }
+
+    .sim-row {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .sim-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--color-neon-purple);
+      text-transform: uppercase;
+    }
+
+    .sim-control-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .sim-btn {
+      flex: 1;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      color: var(--text-primary);
+      cursor: pointer;
+      font-family: var(--font-main);
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .sim-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .sim-btn.active {
+      background: var(--color-success);
+      color: #000;
+      border-color: var(--color-success);
+    }
+    
+    .demo-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      background: rgba(138, 43, 226, 0.2);
+      color: #D1B3FF;
+      margin-bottom: 8px;
+      align-self: flex-start;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-wrapper">
+    <!-- 왼쪽 컬럼: 모바일 프리뷰 형태의 알람 메인 대시보드 데모 -->
+    <div class="demo-column">
+      <h2 class="neon-text-purple" style="font-size: 1.4rem; text-align: center; margin-bottom: 10px;">📱 모바일 메인 뷰 데모</h2>
+      <div class="app-container" style="min-height: auto; border: 1px solid rgba(255,255,255,0.05); border-radius: 24px; background: var(--bg-primary); box-shadow: 0 10px 40px rgba(0,0,0,0.5); padding: 20px;">
+        <!-- 시계 -->
+        <div id="clock-container"></div>
+        
+        <!-- 시리얼 연결 -->
+        <div id="serial-container"></div>
+        
+        <!-- 실시간 모니터 -->
+        <div id="monitor-container"></div>
+        
+        <!-- 알람 스케줄러 -->
+        <div id="scheduler-container"></div>
+      </div>
+    </div>
+
+    <!-- 오른쪽 컬럼: 수동 테스트가 가능한 시뮬레이터 제어기 -->
+    <div class="demo-column">
+      <h2 class="neon-text-purple" style="font-size: 1.4rem; text-align: center; margin-bottom: 10px;">⚙️ 시뮬레이터 제어판</h2>
+      
+      <div class="glass-card simulator-card">
+        <span class="demo-badge">Simulator Console</span>
+        <span class="title-medium" style="margin-bottom: 16px;">🎮 가상 기기 조작기</span>
+        <p class="text-desc" style="margin-bottom: 20px;">
+          아두이노 기기 없이 각 컴포넌트의 상태 변동에 따른 UI 반응과 애니메이션을 가상으로 시뮬레이션할 수 있습니다.
+        </p>
+
+        <!-- 1. 연결 상태 시뮬레이션 -->
+        <div class="sim-row">
+          <span class="sim-label">1. 기기 연결 상태</span>
+          <div class="sim-control-group">
+            <button class="sim-btn" id="sim-btn-connect">연결 완료</button>
+            <button class="sim-btn" id="sim-btn-error">연결 오류 발생</button>
+            <button class="sim-btn active" id="sim-btn-disconnect">연결 해제</button>
+          </div>
+        </div>
+
+        <!-- 2. 거리 센서값 시뮬레이션 -->
+        <div class="sim-row">
+          <span class="sim-label">2. 가상 초음파 측정 거리 (<span id="sim-dist-val">80</span>cm)</span>
+          <input type="range" min="2" max="150" value="80" class="distance-slider" id="sim-dist-slider">
+        </div>
+
+        <!-- 3. 스위치 눌림 상태 시뮬레이션 -->
+        <div class="sim-row">
+          <span class="sim-label">3. 가상 택트 스위치 입력</span>
+          <button class="sim-btn" id="sim-btn-switch">스위치 누르는 중 (Hold)</button>
+        </div>
+
+        <!-- 4. 가상 알람 트리거 시동 -->
+        <div class="sim-row" style="margin-bottom: 0; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08);">
+          <span class="sim-label">4. 가상 알람 강제 구동</span>
+          <button class="btn-neon" id="sim-btn-trigger-alarm" style="border-color: var(--color-danger); box-shadow: 0 0 8px rgba(255, 23, 68, 0.2);">🚨 알람 즉시 터뜨리기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 알람 작동 오버레이 마운트 -->
+  <div id="overlay-container"></div>
+
+  <!-- 데모 스크립트 실행 -->
+  <script type="module" src="demo.js"></script>
+</body>
+</html>

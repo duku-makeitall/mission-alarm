@@ -37,9 +37,14 @@ style.textContent = `
     cursor: pointer;
     transition: border-color 0.2s;
     text-align: center;
+    color-scheme: dark;
   }
   .time-select:focus {
     border-color: var(--color-neon-purple);
+  }
+  .time-select option {
+    background-color: #0A0E17;
+    color: var(--text-primary);
   }
   .mission-grid {
     display: grid;
