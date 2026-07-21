@@ -119,12 +119,19 @@ async function handleAlarmOn() {
 
   console.log('🔔 알람 발동!');
 
-  // 아두이노로 피에조 부저 1000Hz 발생 & DC 모터 최대 세기 작동 명령 전송
+  // 아두이노로 피에조 부저 1000Hz 발생 & DC 모터 작동 명령 전송
   if (state.isConnected) {
     // 100ms 딜레이를 주어 Web Serial Stream 락 경합 및 수신 버퍼 뭉개짐 방지
     await serial.write('BUZZER:1000');
     await delay(100);
-    await serial.write('MOTOR:255');
+    
+    // 소프트웨어 소프트 스타트(Soft Start) 기법 적용
+    // 모터의 최대 구동 세기를 130으로 낮추고, 3단계로 서서히 인가하여 기동 과전류(Inrush Current)로 인한 USB 리셋 현상을 억제합니다.
+    await serial.write('MOTOR:60');
+    await delay(150);
+    await serial.write('MOTOR:100');
+    await delay(150);
+    await serial.write('MOTOR:130');
   } else {
     console.warn('장치가 연결되지 않은 상태에서 알람이 예약 작동되었습니다.');
   }
