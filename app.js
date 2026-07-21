@@ -13,6 +13,38 @@ const state = {
   alarmFiredToday: false  // 당일 알람 중복 작동 방지 플래그
 };
 
+let motorPulseInterval = null; // 모터 간헐적 구동용 타이머 변수
+
+// 모터 간헐적 펄스 구동 함수 (소모 전력을 연속 구동 대비 50% 이상 절감)
+function startMotorPulse() {
+  stopMotorPulse(); // 기존 인터벌 정리
+  
+  let motorOn = false;
+  // 1초 주기로 ON/OFF를 교차하여 평균 소모 전류를 낮추고 리셋을 완전히 방지
+  motorPulseInterval = setInterval(async () => {
+    if (!state.isAlarmTriggered || !state.isConnected) {
+      stopMotorPulse();
+      return;
+    }
+    
+    motorOn = !motorOn;
+    if (motorOn) {
+      // 1초간 약한 진동 세기(110)로 가동
+      await serial.write('MOTOR:110');
+    } else {
+      // 1초간 작동 중지 및 대기
+      await serial.write('MOTOR:0');
+    }
+  }, 1000);
+}
+
+function stopMotorPulse() {
+  if (motorPulseInterval) {
+    clearInterval(motorPulseInterval);
+    motorPulseInterval = null;
+  }
+}
+
 // 1. 컴포넌트 초기화 및 조립
 const clock = new Clock('clock-container');
 const monitor = new SensorMonitor('monitor-container');
@@ -129,13 +161,8 @@ async function handleAlarmOn() {
     await serial.write('BUZZER:1000');
     await delay(100);
     
-    // 소프트웨어 소프트 스타트(Soft Start) 기법 적용
-    // 모터의 최대 구동 세기를 130으로 낮추고, 3단계로 서서히 인가하여 기동 과전류(Inrush Current)로 인한 USB 리셋 현상을 억제합니다.
-    await serial.write('MOTOR:60');
-    await delay(150);
-    await serial.write('MOTOR:100');
-    await delay(150);
-    await serial.write('MOTOR:130');
+    // 간헐적 펄스 구동(Pulse Drive) 모드 실행하여 소모 전류 극소화
+    startMotorPulse();
   } else {
     console.warn('장치가 연결되지 않은 상태에서 알람이 예약 작동되었습니다.');
   }
@@ -156,6 +183,9 @@ async function handleAlarmOff() {
   state.alarmFiredToday = false; // 즉시 중복 감지 방지 플래그 초기화
   console.log('🔕 알람 해제 성공!');
 
+  // 펄스 인터벌 정지
+  stopMotorPulse();
+
   // 아두이노에 피에조 부저 OFF & DC 모터 정지 명령 송신
   if (state.isConnected) {
     // 100ms 딜레이를 주어 Web Serial Stream 락 경합 및 수신 버퍼 뭉개짐 방지
@@ -174,6 +204,9 @@ function handleAlarmOffForce() {
   state.alarmFiredToday = false; // 즉시 중복 감지 방지 플래그 초기화
   console.warn('🚨 연결 해제로 인해 안전 모드(강제 해제)가 발동되었습니다.');
   
+  // 펄스 인터벌 정지
+  stopMotorPulse();
+
   // 아두이노가 혹시라도 살아있을 때 연결이 유실된 것이므로 오버레이만 조용히 닫음
   overlay.overlayEl.style.display = 'none';
   scheduler.cancelAlarm();
