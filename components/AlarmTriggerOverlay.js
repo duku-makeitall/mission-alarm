@@ -324,7 +324,11 @@ export default class AlarmTriggerOverlay {
         num2 = Math.floor(Math.random() * 80) + 10; // 10 ~ 89
       }
       
-      this.mathAnswer = eval(`${num1} ${op} ${num2}`);
+      let result = 0;
+      if (op === '+') result = num1 + num2;
+      else if (op === '-') result = num1 - num2;
+      else if (op === '*') result = num1 * num2;
+      this.mathAnswer = result;
       const symbol = op === '*' ? '×' : op;
 
       this.contentArea.innerHTML = `
